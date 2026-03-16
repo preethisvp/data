@@ -3,26 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>TNEA Cutoff Explorer</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Welcome to My Website</h1>
-    <button onclick="loadData('d2020')">Load Data 1</button>
-    <button onclick="loadData('d2021')">Load Data 2</button>
-    <button onclick="loadData('d2022')">Load Data 3</button>
-    <button onclick="loadData('d2023')">Load Data 4</button>
-    <button onclick="loadData('d2024')">Load Data 5</button>
-    <p id="data"></p>
+    <main class="page">
+        <section class="hero">
+            <span class="eyebrow">TNEA Tool</span>
+            <h1>Previous Year Cutoff Explorer</h1>
+            <p class="subtitle">
+                Fast, lightweight and mobile-friendly cutoff search for TNEA data. Filter by category,
+                compare year trends, and quickly check eligible options for your expected cutoff.
+            </p>
+        </section>
 
-    <script>
-        function loadData(file) {
-            fetch(`${file}.json`)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('data').innerHTML = JSON.stringify(data, null, 2);
-                })
-                .catch(error => console.error('Error loading JSON:', error));
-        }
-    </script>
+        <section class="section">
+            <h2 class="section-title">Select Year</h2>
+            <div id="yearButtons" class="year-wrap"></div>
+            <p id="statusText" class="status"></p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Search And Predictor</h2>
+            <div class="grid">
+                <div class="field col-6">
+                    <label for="queryInput">Search college, branch, or branch code</label>
+                    <input id="queryInput" type="text" placeholder="Example: CEG, Mechanical, CS">
+                </div>
+
+                <div class="field col-2">
+                    <label for="categorySelect">Category</label>
+                    <select id="categorySelect">
+                        <option value="OC">OC</option>
+                        <option value="BC">BC</option>
+                        <option value="BCM">BCM</option>
+                        <option value="MBC">MBC</option>
+                        <option value="SC">SC</option>
+                        <option value="SCA">SCA</option>
+                        <option value="ST">ST</option>
+                    </select>
+                </div>
+
+                <div class="field col-2">
+                    <label for="userCutoffInput">Your cutoff</label>
+                    <input id="userCutoffInput" type="number" min="0" max="200" step="0.5" placeholder="Example: 190.5">
+                </div>
+
+                <div class="field col-2">
+                    <label for="minCutoffInput">Minimum cutoff</label>
+                    <input id="minCutoffInput" type="number" min="0" max="200" step="0.5" placeholder="Optional">
+                </div>
+
+                <div class="field col-3">
+                    <label for="sortSelect">Sort by</label>
+                    <select id="sortSelect">
+                        <option value="cutoff_desc">Cutoff: High to low</option>
+                        <option value="cutoff_asc">Cutoff: Low to high</option>
+                        <option value="college">College name (A-Z)</option>
+                        <option value="branch">Branch name (A-Z)</option>
+                        <option value="near_score">Closest to your score</option>
+                    </select>
+                </div>
+
+                <div class="field col-2">
+                    <label for="pageSizeSelect">Rows per page</label>
+                    <select id="pageSizeSelect">
+                        <option value="25">25</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+
+                <div class="field col-3">
+                    <label>Filters</label>
+                    <label class="check">
+                        <input id="eligibleOnlyCheck" type="checkbox">
+                        Show only eligible rows
+                    </label>
+                </div>
+
+                <div class="field col-4">
+                    <label>Actions</label>
+                    <div class="btn-row">
+                        <button class="btn primary" id="resetBtn" type="button">Reset filters</button>
+                        <button class="btn secondary" id="exportBtn" type="button">Export CSV</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-grid" style="margin-top: 14px;">
+                <div class="card">
+                    <small>Total branches</small>
+                    <strong id="totalRows">-</strong>
+                </div>
+                <div class="card">
+                    <small>Highest cutoff</small>
+                    <strong id="maxCutoff">-</strong>
+                </div>
+                <div class="card">
+                    <small>Average cutoff</small>
+                    <strong id="avgCutoff">-</strong>
+                </div>
+                <div class="card">
+                    <small>Eligible rows</small>
+                    <strong id="eligibleRows">-</strong>
+                </div>
+            </div>
+
+            <p id="resultLine" class="result-line"></p>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>College Code</th>
+                            <th>College Name</th>
+                            <th>Branch Code</th>
+                            <th>Branch</th>
+                            <th>Category Cutoff</th>
+                            <th>Category Last Rank</th>
+                            <th>Combined Code</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultBody"></tbody>
+                </table>
+            </div>
+
+            <div class="pagination">
+                <div class="pager-controls">
+                    <button class="pager-btn" id="prevPageBtn" type="button">Previous</button>
+                    <button class="pager-btn" id="nextPageBtn" type="button">Next</button>
+                </div>
+                <div class="muted" id="pageInfo"></div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Branch Trend Across Years</h2>
+            <div class="grid">
+                <div class="field col-6">
+                    <label for="trendCollegeSelect">College</label>
+                    <select id="trendCollegeSelect"></select>
+                </div>
+                <div class="field col-4">
+                    <label for="trendBranchSelect">Branch</label>
+                    <select id="trendBranchSelect"></select>
+                </div>
+                <div class="field col-2">
+                    <label for="trendCategorySelect">Category</label>
+                    <select id="trendCategorySelect">
+                        <option value="OC">OC</option>
+                        <option value="BC">BC</option>
+                        <option value="BCM">BCM</option>
+                        <option value="MBC">MBC</option>
+                        <option value="SC">SC</option>
+                        <option value="SCA">SCA</option>
+                        <option value="ST">ST</option>
+                    </select>
+                </div>
+            </div>
+            <div id="trendBars" class="trend-grid"></div>
+            <p id="trendSummary" class="result-line"></p>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
 </body>
 </html>
